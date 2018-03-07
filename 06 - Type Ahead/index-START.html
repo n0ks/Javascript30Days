@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Type Ahead 👀</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <form class="search-form">
+    <input type="text" class="search" placeholder="City or State">
+    <ul class="suggestions">
+      <li>Filter for a city</li>
+      <li>or a state</li>
+    </ul>
+  </form>
+  <script>
+    //Fonte dos dados
+    const endpoint =
+      'https://gist.githubusercontent.com/Miserlou/c5cd8364bf9b2420bb29/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json';
+
+    const cities = [];
+    let search = document.querySelector('input');
+    let result = document.querySelector('.suggestions');
+
+    
+    // Pegando os dados com fetchs e promises
+    const prom = fetch(endpoint)
+      //Transformando os dados para json
+      .then(data => data.json())
+      //Usando spread operator para utilizar o json como array, dentro da variável cities
+      .then(data => cities.push(...data));
+
+    //Filtrando as palavras digitadas no campo de pesquisa
+    function findMatches(word, cities) {
+
+      return cities.filter(place => {
+
+        const regex = new RegExp(word, 'gi');
+
+        //Retorna o valor se a palavra existir tanto na cidade quanto no estado
+        return place.city.match(regex) || place.state.match(regex);
+
+      });
+
+    }
+    //Adiciona vírgula nos números da população
+    function numberWithCommas(x) {
+      return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+
+    function displayData() {
+      /*Chamando findMatches() passando o valor do campo que esta sendo digitado para  procurar no array cities */
+      const matchArr = findMatches(this.value, cities);
+
+
+      /*Mapeando a procura no array para uma nova variável */
+      const html = matchArr.map(place => {
+
+        /*Expressão para identificar o input this.value, que pega a palavra escrita e adicionar um destaque no que foi pesquisado */
+        const regex = new RegExp(this.value, 'gi');
+
+        //Dando replace no dado place.city || place.state por um span estilizado
+        const cityName = place.city.replace(regex, `<span class="hl">${this.value}</span>`)
+        const stateName = place.state.replace(regex, `<span class="hl">${this.value}</span>`)
+
+        /*Retornando os dados formatados com template literal  */
+        return `
+        <li>
+          <span class="name">${cityName}, ${stateName}</span>
+          <span class="population">${numberWithCommas(place.population)}</span>
+        </li>
+        `;
+
+        /*join no array para retornar como string sem virgulas no DOM */
+      }).join('');
+
+      result.innerHTML = html;
+    }
+
+    search.addEventListener('keypress', displayData);
+  </script>
+</body>
+
+</html>
